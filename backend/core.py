@@ -114,19 +114,6 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
         if a_otimo <= 0 or lucro_max <= 0:
             return {"erro": "Resultado de otimização inválido (valores não-positivos)"}
 
-        # Estimar se é máximo calculando as derivadas numericamente
-        h = 1e-5
-        f_a = lucro(a_otimo)
-        f_plus = lucro(a_otimo + h)
-        f_minus = lucro(a_otimo - h)
-
-        # Primeira derivada (inclinação da curva)
-        d1 = (f_plus - f_minus) / (2 * h)
-
-        # Segunda derivada (curvatura - deve ser negativa para máximo)
-        d2 = (f_plus - 2*f_a + f_minus) / (h**2)
-        is_maximo = d2 < 0
-
         # --- DERIVADAS ANALÍTICAS COM SYMPY ---
         # G(A) = margem * k * A^e - A
         # G'(A) = margem * k * e * A^(e-1) - 1
@@ -142,8 +129,7 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
         # Segunda derivada analítica
         G_double_prime = sp.diff(G_prime, A_sym)
         d2_analitica = float(G_double_prime.subs(A_sym, a_otimo))
-
-        # --- TRAVA 4: Alerta de Extrapolação ---
+        is_maximo = d2_analitica < 0        # --- TRAVA 4: Alerta de Extrapolação ---
         alerta_risco = None
         if max_historico and a_otimo > (max_historico * 2.0):
             alerta_risco = (
@@ -184,10 +170,15 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
         a_otimista = fminbound(lambda a: -calcular_lucro(a, e_otimista), a_min, a_max, full_output=False, xtol=1e-6)
         lucro_otimista_val = calcular_lucro(a_otimista, e_otimista)
 
-        # Calcular derivadas analíticas para os cenários
+        # Calcular derivadas analíticas para os cenários usando SymPy
         # G'(A) = margem * k * e * A^(e-1) - 1
-        d1_pessimista = float((margem_unitaria * k * e_pessimista * (a_pessimista ** (e_pessimista - 1)) - 1))
-        d1_otimista = float((margem_unitaria * k * e_otimista * (a_otimista ** (e_otimista - 1)) - 1))
+        A_sym_pess = sp.Symbol('A', positive=True, real=True)
+        G_pess = margem_unitaria * k * (A_sym_pess ** e_pessimista) - A_sym_pess
+        d1_pessimista = float(sp.diff(G_pess, A_sym_pess).subs(A_sym_pess, a_pessimista))
+
+        A_sym_otim = sp.Symbol('A', positive=True, real=True)
+        G_otim = margem_unitaria * k * (A_sym_otim ** e_otimista) - A_sym_otim
+        d1_otimista = float(sp.diff(G_otim, A_sym_otim).subs(A_sym_otim, a_otimista))
 
         # Calcular nível de extrapolação
         nivel_extrapolacao = "dentro_da_faixa"
