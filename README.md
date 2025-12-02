@@ -25,6 +25,7 @@ O **Budget Optimizer** é uma ferramenta que ajuda empresas e profissionais de m
 ## 🛠️ Tecnologias
 
 ### Frontend
+
 - **React 19** - Interface de usuário
 - **TypeScript** - Tipagem estática
 - **Vite** - Bundler e dev server
@@ -33,6 +34,7 @@ O **Budget Optimizer** é uma ferramenta que ajuda empresas e profissionais de m
 - **Lucide React** - Ícones
 
 ### Backend
+
 - **FastAPI** - Framework web Python
 - **Python 3.8+** - Linguagem
 - **Pandas** - Manipulação de dados
@@ -44,18 +46,21 @@ O **Budget Optimizer** é uma ferramenta que ajuda empresas e profissionais de m
 ## ✨ Funcionalidades
 
 ### Upload e Calibração
+
 - 📤 Upload de arquivo CSV com dados históricos
 - 🔄 Processamento automático de dados
 - 📊 Cálculo de elasticidade via regressão log-log
 - ✅ Validação de dados (remoção de zeros)
 
 ### Cálculo de Otimização
+
 - 💰 Determinação do investimento ótimo
 - 📈 Projeção de lucro máximo esperado
 - 📉 Gráfico interativo da curva lucro vs investimento
 - ✔️ Validação matemática (segunda derivada)
 
 ### Visualização
+
 - 🎨 Interface moderna e intuitiva
 - 📊 Gráfico com destaque do ponto ótimo
 - 💡 Exibição de métricas principais
@@ -64,6 +69,7 @@ O **Budget Optimizer** é uma ferramenta que ajuda empresas e profissionais de m
 ## 📦 Pré-requisitos
 
 ### Requisitos do Sistema
+
 - Node.js 18+ (para Frontend)
 - Python 3.8+ (para Backend)
 - npm ou yarn (gerenciador de pacotes)
@@ -72,6 +78,7 @@ O **Budget Optimizer** é uma ferramenta que ajuda empresas e profissionais de m
 ## 🚀 Instalação
 
 ### 1. Clonar o Repositório
+
 ```bash
 git clone <seu-repositorio>
 cd projeto_fullstack_calculo
@@ -119,6 +126,7 @@ O frontend estará disponível em `http://localhost:5173` (ou a porta indicada n
 ### Passo 1: Preparar os Dados
 
 Crie um arquivo CSV com as seguintes colunas:
+
 ```csv
 investimento,vendas
 100,500
@@ -128,6 +136,7 @@ investimento,vendas
 ```
 
 **Requisitos:**
+
 - Mínimo 2 linhas de dados
 - Colunas: `investimento` e `vendas`
 - Valores devem ser numéricos positivos
@@ -185,15 +194,18 @@ projeto_fullstack_calculo/
 ### Endpoints
 
 #### POST `/upload`
+
 Processa um arquivo CSV e calcula elasticidade.
 
 **Request:**
+
 ```
 Content-Type: multipart/form-data
 file: <arquivo.csv>
 ```
 
 **Response:**
+
 ```json
 {
   "elasticidade": 0.5,
@@ -202,9 +214,11 @@ file: <arquivo.csv>
 ```
 
 #### POST `/calcular`
+
 Otimiza o investimento baseado nos parâmetros.
 
 **Request:**
+
 ```json
 {
   "margem": 50.0,
@@ -214,6 +228,7 @@ Otimiza o investimento baseado nos parâmetros.
 ```
 
 **Response:**
+
 ```json
 {
   "investimento_otimo": 1000.50,
@@ -235,6 +250,7 @@ Otimiza o investimento baseado nos parâmetros.
 $$Q = k \cdot A^e$$
 
 Onde:
+
 - $Q$ = Quantidade de vendas
 - $A$ = Investimento
 - $e$ = Elasticidade
@@ -247,6 +263,7 @@ Os dados são transformados em escala logarítmica:
 $$\ln(Q) = \ln(k) + e \cdot \ln(A)$$
 
 Esta é uma regressão linear onde:
+
 - **Coeficiente angular** = elasticidade ($e$)
 - **Intercepto** = $\ln(k)$
 
@@ -269,6 +286,7 @@ A aplicação utiliza o método numérico de **minimização por bounds** (fminb
 ## 📊 Exemplo de Uso
 
 ### Arquivo de Entrada (dados_historicos.csv)
+
 ```csv
 investimento,vendas
 1000,5000
@@ -279,12 +297,14 @@ investimento,vendas
 ```
 
 ### Processo
+
 1. Upload do arquivo
 2. Sistema calcula: $e ≈ 0.45$, $k ≈ 150$
 3. Usuário define: margem = R$ 50
 4. Clica em "CALCULAR"
 
 ### Saída
+
 - **Investimento Ótimo:** R$ 2.100,00
 - **Lucro Máximo:** R$ 180.000,00
 - **Gráfico:** Exibe a curva de lucro com ponto máximo destacado
@@ -302,6 +322,7 @@ a_max = 10000        # Investimento máximo
 ### CORS (Compartilhamento de Recursos)
 
 O backend permite requisições de qualquer origem:
+
 ```python
 app.add_middleware(
     CORSMiddleware,
@@ -314,15 +335,18 @@ app.add_middleware(
 ## 🐛 Resolução de Problemas
 
 ### "Erro ao conectar ao servidor"
+
 - Verifique se o backend está rodando em `http://127.0.0.1:8000`
 - Verifique o console do backend para mensagens de erro
 
 ### "Erro ao processar o CSV"
+
 - Certifique-se de que o arquivo tem as colunas `investimento` e `vendas`
 - Verifique se todos os valores são numéricos e positivos
 - Remova linhas com valores zero
 
 ### "Erro na otimização"
+
 - Verifique se os parâmetros (margem, k, e) são válidos
 - Valores muito extremos podem causar problemas numéricos
 
