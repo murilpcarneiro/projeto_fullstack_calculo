@@ -114,13 +114,34 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
         if a_otimo <= 0 or lucro_max <= 0:
             return {"erro": "Resultado de otimização inválido (valores não-positivos)"}
 
-        # Estimar se é máximo calculando a segunda derivada numericamente
+        # Estimar se é máximo calculando as derivadas numericamente
         h = 1e-5
         f_a = lucro(a_otimo)
         f_plus = lucro(a_otimo + h)
         f_minus = lucro(a_otimo - h)
+
+        # Primeira derivada (inclinação da curva)
+        d1 = (f_plus - f_minus) / (2 * h)
+
+        # Segunda derivada (curvatura - deve ser negativa para máximo)
         d2 = (f_plus - 2*f_a + f_minus) / (h**2)
         is_maximo = d2 < 0
+
+        # --- DERIVADAS ANALÍTICAS COM SYMPY ---
+        # G(A) = margem * k * A^e - A
+        # G'(A) = margem * k * e * A^(e-1) - 1
+        # G''(A) = margem * k * e * (e-1) * A^(e-2)
+
+        A_sym = sp.Symbol('A', positive=True, real=True)
+        G_sym = margem_unitaria * k * (A_sym ** e_validado) - A_sym
+
+        # Primeira derivada analítica
+        G_prime = sp.diff(G_sym, A_sym)
+        d1_analitica = float(G_prime.subs(A_sym, a_otimo))
+
+        # Segunda derivada analítica
+        G_double_prime = sp.diff(G_prime, A_sym)
+        d2_analitica = float(G_double_prime.subs(A_sym, a_otimo))
 
         # --- TRAVA 4: Alerta de Extrapolação ---
         alerta_risco = None
@@ -148,26 +169,25 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
         e_pessimista = max(e_validado * 0.9, 0.01)  # -10% (mais conservador)
         e_otimista = min(e_validado * 1.1, 1.0)     # +10% (mais agressivo)
 
-        def lucro_pessimista(A):
+        # Função genérica de lucro para qualquer elasticidade
+        def calcular_lucro(A, elasticidade):
             if A <= 0:
                 return -1e10
-            Q = k * (A ** e_pessimista)
-            G = margem_unitaria * Q
-            return G - A
-
-        def lucro_otimista(A):
-            if A <= 0:
-                return -1e10
-            Q = k * (A ** e_otimista)
+            Q = k * (A ** elasticidade)
             G = margem_unitaria * Q
             return G - A
 
         # Otimizar nos cenários
-        a_pessimista = fminbound(lambda a: -lucro_pessimista(a), a_min, a_max, full_output=False, xtol=1e-6)
-        lucro_pessimista_val = lucro_pessimista(a_pessimista)
+        a_pessimista = fminbound(lambda a: -calcular_lucro(a, e_pessimista), a_min, a_max, full_output=False, xtol=1e-6)
+        lucro_pessimista_val = calcular_lucro(a_pessimista, e_pessimista)
 
-        a_otimista = fminbound(lambda a: -lucro_otimista(a), a_min, a_max, full_output=False, xtol=1e-6)
-        lucro_otimista_val = lucro_otimista(a_otimista)
+        a_otimista = fminbound(lambda a: -calcular_lucro(a, e_otimista), a_min, a_max, full_output=False, xtol=1e-6)
+        lucro_otimista_val = calcular_lucro(a_otimista, e_otimista)
+
+        # Calcular derivadas analíticas para os cenários
+        # G'(A) = margem * k * e * A^(e-1) - 1
+        d1_pessimista = float((margem_unitaria * k * e_pessimista * (a_pessimista ** (e_pessimista - 1)) - 1))
+        d1_otimista = float((margem_unitaria * k * e_otimista * (a_otimista ** (e_otimista - 1)) - 1))
 
         # Calcular nível de extrapolação
         nivel_extrapolacao = "dentro_da_faixa"
@@ -193,19 +213,22 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
             "is_maximo": bool(is_maximo),
             "elasticidade_usada": float(e_validado),
             "constante_k_usada": float(k),
-            "derivada_segunda_valor": float(d2),
+            "derivada_primeira_valor": float(d1_analitica),
+            "derivada_segunda_valor": float(d2_analitica),
             "alerta_risco": alerta_combinado,
             "pontos_curva": pontos_curva,
             # Análise de sensibilidade
             "cenario_pessimista": {
                 "investimento": float(a_pessimista),
                 "lucro": float(lucro_pessimista_val),
-                "elasticidade": float(e_pessimista)
+                "elasticidade": float(e_pessimista),
+                "derivada_primeira": float(d1_pessimista)
             },
             "cenario_otimista": {
                 "investimento": float(a_otimista),
                 "lucro": float(lucro_otimista_val),
-                "elasticidade": float(e_otimista)
+                "elasticidade": float(e_otimista),
+                "derivada_primeira": float(d1_otimista)
             },
             "nivel_extrapolacao": nivel_extrapolacao,
             "max_investimento_historico": float(max_historico) if max_historico else None

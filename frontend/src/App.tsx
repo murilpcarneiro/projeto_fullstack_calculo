@@ -21,6 +21,7 @@ interface CenarioSensibilidade {
   investimento: number
   lucro: number
   elasticidade: number
+  derivada_primeira?: number
 }
 
 interface ResultadoOtimizacao {
@@ -29,6 +30,7 @@ interface ResultadoOtimizacao {
   is_maximo: boolean
   elasticidade_usada: number
   constante_k_usada: number
+  derivada_primeira_valor: number
   derivada_segunda_valor: number
   alerta_risco?: string | null
   pontos_curva?: PontoGrafico[]
