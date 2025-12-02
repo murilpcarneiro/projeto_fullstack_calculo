@@ -24,6 +24,27 @@ interface CenarioSensibilidade {
   derivada_primeira?: number
 }
 
+interface EtapaJustificativa {
+  numero: number
+  nome: string
+  descricao: string
+  detalhes?: string[]
+  formula?: string
+}
+
+interface ResultadoFinal {
+  investimento_recomendado: string
+  lucro_esperado: string
+  validacao: string
+  confiabilidade: string
+}
+
+interface Justificativa {
+  titulo: string
+  etapas: EtapaJustificativa[]
+  resultado_final: ResultadoFinal
+}
+
 interface ResultadoOtimizacao {
   investimento_otimo: number
   lucro_projetado: number
@@ -34,6 +55,7 @@ interface ResultadoOtimizacao {
   derivada_segunda_valor: number
   alerta_risco?: string | null
   pontos_curva?: PontoGrafico[]
+  justificativa?: Justificativa
   cenario_pessimista?: CenarioSensibilidade
   cenario_otimista?: CenarioSensibilidade
   nivel_extrapolacao?:
@@ -930,6 +952,273 @@ function App() {
                       </p>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Seção: Como a Solução foi Escolhida */}
+              {resultado.justificativa && (
+                <div
+                  style={{
+                    marginTop: '32px',
+                    padding: '24px',
+                    background: '#fafafa',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <h2
+                    style={{
+                      fontSize: '1.4em',
+                      fontWeight: '700',
+                      color: '#1976d2',
+                      margin: '0 0 24px 0',
+                      borderBottom: '2px solid #1976d2',
+                      paddingBottom: '12px',
+                    }}
+                  >
+                    {resultado.justificativa.titulo}
+                  </h2>
+
+                  {/* Etapas da Justificativa */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns:
+                        'repeat(auto-fit, minmax(280px, 1fr))',
+                      gap: '20px',
+                      marginBottom: '24px',
+                    }}
+                  >
+                    {resultado.justificativa.etapas.map((etapa) => (
+                      <div
+                        key={etapa.numero}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #bdbdbd',
+                          borderRadius: '6px',
+                          padding: '16px',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            marginBottom: '12px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '32px',
+                              height: '32px',
+                              borderRadius: '50%',
+                              background: '#1976d2',
+                              color: '#ffffff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontWeight: '700',
+                              fontSize: '0.9em',
+                              marginRight: '12px',
+                            }}
+                          >
+                            {etapa.numero}
+                          </div>
+                          <h3
+                            style={{
+                              fontSize: '1em',
+                              fontWeight: '600',
+                              color: '#333333',
+                              margin: '0',
+                            }}
+                          >
+                            {etapa.nome}
+                          </h3>
+                        </div>
+
+                        <p
+                          style={{
+                            fontSize: '0.9em',
+                            color: '#555555',
+                            margin: '8px 0',
+                            lineHeight: '1.5',
+                          }}
+                        >
+                          {etapa.descricao}
+                        </p>
+
+                        {etapa.formula && (
+                          <div
+                            style={{
+                              background: '#f5f5f5',
+                              border: '1px solid #e0e0e0',
+                              borderRadius: '4px',
+                              padding: '10px',
+                              margin: '8px 0',
+                              fontFamily: 'monospace',
+                              fontSize: '0.85em',
+                              color: '#d32f2f',
+                              overflowX: 'auto',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            {etapa.formula}
+                          </div>
+                        )}
+
+                        {etapa.detalhes && etapa.detalhes.length > 0 && (
+                          <ul
+                            style={{
+                              fontSize: '0.85em',
+                              color: '#666666',
+                              margin: '8px 0 0 0',
+                              paddingLeft: '20px',
+                              lineHeight: '1.6',
+                            }}
+                          >
+                            {etapa.detalhes.map((detalhe, idx) => (
+                              <li key={idx} style={{ marginBottom: '4px' }}>
+                                {detalhe}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Resultado Final */}
+                  {resultado.justificativa.resultado_final && (
+                    <div
+                      style={{
+                        background: '#e3f2fd',
+                        border: '2px solid #1976d2',
+                        borderRadius: '6px',
+                        padding: '20px',
+                      }}
+                    >
+                      <h3
+                        style={{
+                          fontSize: '1.1em',
+                          fontWeight: '700',
+                          color: '#1565c0',
+                          margin: '0 0 16px 0',
+                        }}
+                      >
+                        ✓ Resultado Final
+                      </h3>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns:
+                            'repeat(auto-fit, minmax(200px, 1fr))',
+                          gap: '16px',
+                        }}
+                      >
+                        <div>
+                          <p
+                            style={{
+                              fontSize: '0.8em',
+                              color: '#1565c0',
+                              fontWeight: '600',
+                              margin: '0 0 4px 0',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Investimento Recomendado
+                          </p>
+                          <p
+                            style={{
+                              fontSize: '1.3em',
+                              fontWeight: '700',
+                              color: '#1565c0',
+                              margin: '0',
+                            }}
+                          >
+                            {
+                              resultado.justificativa.resultado_final
+                                .investimento_recomendado
+                            }
+                          </p>
+                        </div>
+                        <div>
+                          <p
+                            style={{
+                              fontSize: '0.8em',
+                              color: '#1565c0',
+                              fontWeight: '600',
+                              margin: '0 0 4px 0',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Lucro Esperado
+                          </p>
+                          <p
+                            style={{
+                              fontSize: '1.3em',
+                              fontWeight: '700',
+                              color: '#1565c0',
+                              margin: '0',
+                            }}
+                          >
+                            {
+                              resultado.justificativa.resultado_final
+                                .lucro_esperado
+                            }
+                          </p>
+                        </div>
+                        <div>
+                          <p
+                            style={{
+                              fontSize: '0.8em',
+                              color: '#1565c0',
+                              fontWeight: '600',
+                              margin: '0 0 4px 0',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Validação
+                          </p>
+                          <p
+                            style={{
+                              fontSize: '0.95em',
+                              fontWeight: '600',
+                              color: '#2e7d32',
+                              margin: '0',
+                            }}
+                          >
+                            {resultado.justificativa.resultado_final.validacao}
+                          </p>
+                        </div>
+                        <div>
+                          <p
+                            style={{
+                              fontSize: '0.8em',
+                              color: '#1565c0',
+                              fontWeight: '600',
+                              margin: '0 0 4px 0',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Confiabilidade
+                          </p>
+                          <p
+                            style={{
+                              fontSize: '0.9em',
+                              color: '#555555',
+                              margin: '0',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            {
+                              resultado.justificativa.resultado_final
+                                .confiabilidade
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

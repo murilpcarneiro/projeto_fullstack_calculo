@@ -198,6 +198,64 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
         elif alerta_risco:
             alerta_combinado = alerta_risco
 
+        # --- JUSTIFICATIVA MATEMÁTICA ---
+        # Gerar explicação de como a solução foi escolhida
+        justificativa = {
+            "titulo": "Como a Solução foi Escolhida",
+            "etapas": [
+                {
+                    "numero": 1,
+                    "nome": "Modelo Matemático",
+                    "descricao": f"Utilizamos o modelo de Cobb-Douglas: Q = k·A^e, onde:",
+                    "detalhes": [
+                        f"Q = quantidade produzida (vendas)",
+                        f"A = investimento em publicidade",
+                        f"k = {k:.4f} (constante de produtividade)",
+                        f"e = {e_validado:.4f} (elasticidade de output)"
+                    ]
+                },
+                {
+                    "numero": 2,
+                    "nome": "Função de Lucro",
+                    "descricao": "O lucro é definido como:",
+                    "formula": f"G(A) = margem × k × A^e - A",
+                    "detalhes": [
+                        f"Lucro = (margem unitária × quantidade) - investimento",
+                        f"Lucro = {margem_unitaria:.2f} × {k:.4f} × A^{e_validado:.4f} - A"
+                    ]
+                },
+                {
+                    "numero": 3,
+                    "nome": "Ponto Ótimo (Condição de Primeira Ordem)",
+                    "descricao": "Para maximizar lucro, igualamos a derivada primeira a zero:",
+                    "formula": f"G'(A) = 0",
+                    "detalhes": [
+                        f"G'(A) = {margem_unitaria:.2f} × {k:.4f} × {e_validado:.4f} × A^{e_validado - 1:.4f} - 1 = 0",
+                        f"No ponto ótimo A* = R$ {a_otimo:.2f}:",
+                        f"G'(A*) ≈ {d1_analitica:.6f} (próximo de zero)",
+                    ]
+                },
+                {
+                    "numero": 4,
+                    "nome": "Validação (Teste da Segunda Derivada)",
+                    "descricao": "Confirmamos que é máximo verificando se G''(A) < 0:",
+                    "formula": f"G''(A) = {margem_unitaria:.2f} × {k:.4f} × {e_validado:.4f} × {e_validado - 1:.4f} × A^{e_validado - 2:.4f}",
+                    "detalhes": [
+                        f"No ponto ótimo:",
+                        f"G''(A*) = {d2_analitica:.6f}",
+                        f"Como G''(A*) < 0 ✓, confirmamos que A* = R$ {a_otimo:.2f} é um MÁXIMO",
+                        f"Lucro máximo esperado: R$ {lucro_max:.2f}"
+                    ]
+                }
+            ],
+            "resultado_final": {
+                "investimento_recomendado": f"R$ {a_otimo:.2f}",
+                "lucro_esperado": f"R$ {lucro_max:.2f}",
+                "validacao": "✓ Máximo confirmado (segunda derivada negativa)",
+                "confiabilidade": "Solução analítica exata calculada com SymPy"
+            }
+        }
+
         return {
             "investimento_otimo": float(a_otimo),
             "lucro_projetado": float(lucro_max),
@@ -208,6 +266,8 @@ def otimizar_investimento(margem_unitaria, k, e, max_historico=None):
             "derivada_segunda_valor": float(d2_analitica),
             "alerta_risco": alerta_combinado,
             "pontos_curva": pontos_curva,
+            # Justificativa matemática
+            "justificativa": justificativa,
             # Análise de sensibilidade
             "cenario_pessimista": {
                 "investimento": float(a_pessimista),
