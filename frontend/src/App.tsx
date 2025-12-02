@@ -17,17 +17,35 @@ interface PontoGrafico {
   lucro: number
 }
 
+interface CenarioSensibilidade {
+  investimento: number
+  lucro: number
+  elasticidade: number
+}
+
 interface ResultadoOtimizacao {
   investimento_otimo: number
   lucro_projetado: number
   is_maximo: boolean
   elasticidade_usada: number
-  pontos_curva?: PontoGrafico[] // Array para desenhar o gráfico
+  constante_k_usada: number
+  derivada_segunda_valor: number
+  alerta_risco?: string | null
+  pontos_curva?: PontoGrafico[]
+  cenario_pessimista?: CenarioSensibilidade
+  cenario_otimista?: CenarioSensibilidade
+  nivel_extrapolacao?: 'dentro_da_faixa' | 'extrapolacao_moderada' | 'extrapolacao_alta'
+  max_investimento_historico?: number
+  erro?: string
 }
 
 interface RespostaUpload {
   elasticidade: number
   constante_k: number
+  r_squared?: number
+  aviso_dados?: string | null
+  max_investimento_historico?: number
+  erro?: string
 }
 
 function App() {
@@ -36,6 +54,18 @@ function App() {
   const [margem, setMargem] = useState<number>(50)
   const [resultado, setResultado] = useState<ResultadoOtimizacao | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
+  const [avisoUpload, setAvisoUpload] = useState<string | null>(null)
+
+  // Fluxo simplificado
+  const [lucrobruto, setLucroBruto] = useState<number>(5000)
+  const [investimento, setInvestimento] = useState<number>(1000)
+  const [margemSimples, setMargemSimples] = useState<number>(50)
+  const [resultadoSimples, setResultadoSimples] =
+    useState<ResultadoOtimizacao | null>(null)
+  const [loadingSimples, setLoadingSimples] = useState<boolean>(false)
+
+  // Aba ativa
+  const [abaAtiva, setAbaAtiva] = useState<'csv' | 'simples'>('csv')
 
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) return
@@ -50,13 +80,23 @@ function App() {
         'http://127.0.0.1:8000/upload',
         formData
       )
+
+      if (res.data.erro) {
+        alert(`Erro: ${res.data.erro}`)
+        return
+      }
+
       setE(res.data.elasticidade)
       setK(res.data.constante_k)
-      alert(
-        `Dados processados! Elasticidade encontrada: ${res.data.elasticidade.toFixed(
-          4
-        )}`
-      )
+      setAvisoUpload(res.data.aviso_dados || null)
+
+      let mensagem = `Dados processados!\nElasticidade: ${res.data.elasticidade?.toFixed(
+        4
+      )}\nR²: ${res.data.r_squared?.toFixed(4)}`
+      if (res.data.aviso_dados) {
+        mensagem += `\n\n⚠️ ${res.data.aviso_dados}`
+      }
+      alert(mensagem)
     } catch (error) {
       console.error('Erro no upload', error)
       alert('Erro ao processar o CSV.')
@@ -68,6 +108,7 @@ function App() {
   const handleCalcular = async () => {
     try {
       setLoading(true)
+      console.log('Enviando /calcular com:', { margem, k, e })
       const res = await axios.post<ResultadoOtimizacao>(
         'http://127.0.0.1:8000/calcular',
         {
@@ -76,7 +117,18 @@ function App() {
           e: e,
         }
       )
+      console.log('Resposta recebida:', res.data)
+
+      if (res.data.erro) {
+        alert(`Erro: ${res.data.erro}`)
+        return
+      }
+
       setResultado(res.data)
+
+      if (res.data.alerta_risco) {
+        alert(`⚠️ ${res.data.alerta_risco}`)
+      }
     } catch (error) {
       console.error('Erro no cálculo', error)
       alert('Erro ao calcular o ótimo.')
@@ -135,6 +187,29 @@ function App() {
           padding: '60px 80px',
         }}
       >
+        {/* Aviso de Upload */}
+        {avisoUpload && (
+          <div
+            style={{
+              background: '#fff3cd',
+              border: '1px solid #ffeaa7',
+              borderRadius: '4px',
+              padding: '16px',
+              marginBottom: '40px',
+              fontSize: '0.9em',
+              color: '#856404',
+              lineHeight: '1.6',
+            }}
+          >
+            <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>
+              ⚠️ Aviso sobre os dados
+            </p>
+            <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+              {avisoUpload}
+            </p>
+          </div>
+        )}
+
         {/* --- SEÇÃO DE INPUTS --- */}
         <div
           style={{
@@ -328,6 +403,52 @@ function App() {
               Resultado da Otimização
             </h2>
 
+            {/* Cabeçalho de Recomendação */}
+            <div
+              style={{
+                background: '#f0f7ff',
+                border: '2px solid #2196f3',
+                borderRadius: '8px',
+                padding: '20px',
+                marginBottom: '40px',
+              }}
+            >
+              <p
+                style={{
+                  fontSize: '0.85em',
+                  color: '#1565c0',
+                  margin: '0 0 8px 0',
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                }}
+              >
+                ✓ Análise Concluída
+              </p>
+              <p
+                style={{
+                  fontSize: '1.1em',
+                  color: '#000000',
+                  margin: 0,
+                  fontWeight: '600',
+                }}
+              >
+                Recomendação Técnica (Cenário Base):
+              </p>
+              <p
+                style={{
+                  fontSize: '0.9em',
+                  color: '#666666',
+                  margin: '8px 0 0 0',
+                  lineHeight: '1.5',
+                }}
+              >
+                Invista <strong>R$ {resultado.investimento_otimo.toLocaleString('pt-BR', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}</strong> para maximizar lucros. Faixas de sensibilidade mostradas abaixo baseadas em variações da elasticidade (±10%).
+              </p>
+            </div>
+
             <div
               style={{
                 display: 'grid',
@@ -394,6 +515,45 @@ function App() {
               </div>
             </div>
 
+            {/* --- LEGENDA DO GRÁFICO --- */}
+            {resultado.pontos_curva && (
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '20px',
+                  marginBottom: '20px',
+                  flexWrap: 'wrap',
+                  padding: '16px',
+                  background: '#f9f9f9',
+                  borderRadius: '6px',
+                  border: '1px solid #e0e0e0',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '2px',
+                      background: '#cccccc',
+                      borderTop: '2px dashed #cccccc',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.85em', color: '#666666' }}>Máximo Histórico</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div
+                    style={{
+                      width: '20px',
+                      height: '2px',
+                      background: '#2196f3',
+                      borderTop: '2px dashed #2196f3',
+                    }}
+                  />
+                  <span style={{ fontSize: '0.85em', color: '#1565c0', fontWeight: '600' }}>Recomendação Técnica</span>
+                </div>
+              </div>
+            )}
+
             {/* --- GRÁFICO --- */}
             {resultado.pontos_curva && (
               <div
@@ -439,11 +599,34 @@ function App() {
                         boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
                       }}
                     />
+                    {/* Linha do máximo histórico */}
+                    {resultado.max_investimento_historico && (
+                      <ReferenceLine
+                        x={resultado.max_investimento_historico}
+                        stroke="#cccccc"
+                        strokeDasharray="3 3"
+                        strokeWidth={2}
+                        label={{
+                          value: 'Máx. Histórico',
+                          position: 'top',
+                          fill: '#999999',
+                          fontSize: '0.8em',
+                        }}
+                      />
+                    )}
+                    {/* Linha do investimento ótimo */}
                     <ReferenceLine
                       x={resultado.investimento_otimo}
-                      stroke="#888888"
+                      stroke="#2196f3"
                       strokeDasharray="5 5"
-                      strokeWidth={2}
+                      strokeWidth={2.5}
+                      label={{
+                        value: 'Recomendação',
+                        position: 'top',
+                        fill: '#1565c0',
+                        fontSize: '0.8em',
+                        fontWeight: 'bold',
+                      }}
                     />
                     <Line
                       type="monotone"
@@ -464,36 +647,312 @@ function App() {
                 paddingTop: '32px',
               }}
             >
-              <div style={{ marginBottom: '20px' }}>
-                <p style={{ fontSize: '0.95em', margin: 0 }}>
-                  <span style={{ fontWeight: '600', color: '#000000' }}>
-                    Status de Validação:{' '}
-                  </span>
-                  <span
+              {/* Alertas de Risco */}
+              {resultado.alerta_risco && (
+                <div
+                  style={{
+                    background: '#fff3cd',
+                    border: '1px solid #ffeaa7',
+                    borderRadius: '4px',
+                    padding: '16px',
+                    marginBottom: '24px',
+                    fontSize: '0.9em',
+                    color: '#856404',
+                    lineHeight: '1.6',
+                  }}
+                >
+                  <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>
+                    ⚠️ Aviso Importante
+                  </p>
+                  <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+                    {resultado.alerta_risco}
+                  </p>
+                </div>
+              )}
+
+              {/* Badges de Risco */}
+              {resultado.nivel_extrapolacao && (
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '12px',
+                    marginBottom: '24px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {resultado.nivel_extrapolacao === 'dentro_da_faixa' && (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#e8f5e9',
+                        border: '1px solid #4caf50',
+                        borderRadius: '20px',
+                        padding: '8px 16px',
+                        fontSize: '0.9em',
+                        fontWeight: '600',
+                        color: '#2d5016',
+                      }}
+                    >
+                      🟢 Dentro da Faixa Histórica
+                    </div>
+                  )}
+                  {resultado.nivel_extrapolacao === 'extrapolacao_moderada' && (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#fff3cd',
+                        border: '1px solid #ffc107',
+                        borderRadius: '20px',
+                        padding: '8px 16px',
+                        fontSize: '0.9em',
+                        fontWeight: '600',
+                        color: '#856404',
+                      }}
+                    >
+                      🟡 Extrapolação Moderada
+                    </div>
+                  )}
+                  {resultado.nivel_extrapolacao === 'extrapolacao_alta' && (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: '#ffebee',
+                        border: '1px solid #f44336',
+                        borderRadius: '20px',
+                        padding: '8px 16px',
+                        fontSize: '0.9em',
+                        fontWeight: '600',
+                        color: '#7d2323',
+                      }}
+                    >
+                      🔴 Extrapolação Alta
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Análise de Sensibilidade - Cenários */}
+              {resultado.cenario_pessimista && resultado.cenario_otimista && (
+                <div
+                  style={{
+                    background: '#f5f5f5',
+                    border: '1px solid #e0e0e0',
+                    borderRadius: '6px',
+                    padding: '20px',
+                    marginBottom: '24px',
+                  }}
+                >
+                  <p
                     style={{
-                      color: resultado.is_maximo ? '#2d5016' : '#7d2323',
-                      fontWeight: '500',
+                      fontSize: '0.95em',
+                      fontWeight: '600',
+                      color: '#000000',
+                      marginTop: 0,
+                      marginBottom: '16px',
                     }}
                   >
-                    {resultado.is_maximo
-                      ? 'Máximo confirmado (Derivada 2ª < 0)'
-                      : 'Erro de otimização'}
-                  </span>
-                </p>
-              </div>
-              <p
-                style={{
-                  fontSize: '0.95em',
-                  color: '#555555',
-                  margin: 0,
-                  lineHeight: '1.7',
-                  fontStyle: 'italic',
-                }}
-              >
-                O orçamento de R$ {resultado.investimento_otimo.toFixed(0)}{' '}
-                representa {(resultado.elasticidade_usada * 100).toFixed(1)}% do
-                lucro bruto esperado, conforme o Teorema de Wright.
-              </p>
+                    📊 Análise de Sensibilidade
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.85em',
+                      color: '#666666',
+                      margin: '0 0 16px 0',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Como a incerteza na elasticidade (±10%) afeta a recomendação:
+                  </p>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr 1fr',
+                      gap: '16px',
+                    }}
+                  >
+                    {/* Cenário Pessimista */}
+                    <div
+                      style={{
+                        background: '#fff5f5',
+                        border: '1px solid #ffcdd2',
+                        borderRadius: '4px',
+                        padding: '14px',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '0.8em',
+                          color: '#c62828',
+                          margin: '0 0 8px 0',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Cenário Pessimista
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '0.75em',
+                          color: '#888888',
+                          margin: '0 0 4px 0',
+                        }}
+                      >
+                        Elasticidade -10%
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '1.1em',
+                          fontWeight: '600',
+                          color: '#000000',
+                          margin: '4px 0',
+                        }}
+                      >
+                        R$ {resultado.cenario_pessimista.investimento.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '0.8em',
+                          color: '#666666',
+                          margin: '8px 0 0 0',
+                          borderTop: '1px solid #ffcdd2',
+                          paddingTop: '8px',
+                        }}
+                      >
+                        Lucro: R$ {resultado.cenario_pessimista.lucro.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+
+                    {/* Cenário Base */}
+                    <div
+                      style={{
+                        background: '#f0f7ff',
+                        border: '2px solid #2196f3',
+                        borderRadius: '4px',
+                        padding: '14px',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '0.8em',
+                          color: '#1565c0',
+                          margin: '0 0 8px 0',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Cenário Base (Recomendado)
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '0.75em',
+                          color: '#888888',
+                          margin: '0 0 4px 0',
+                        }}
+                      >
+                        Elasticidade = {resultado.elasticidade_usada?.toFixed(4)}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '1.1em',
+                          fontWeight: '600',
+                          color: '#000000',
+                          margin: '4px 0',
+                        }}
+                      >
+                        R$ {resultado.investimento_otimo.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '0.8em',
+                          color: '#666666',
+                          margin: '8px 0 0 0',
+                          borderTop: '1px solid #90caf9',
+                          paddingTop: '8px',
+                        }}
+                      >
+                        Lucro: R$ {resultado.lucro_projetado.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+
+                    {/* Cenário Otimista */}
+                    <div
+                      style={{
+                        background: '#f1f8e9',
+                        border: '1px solid #c6e6b7',
+                        borderRadius: '4px',
+                        padding: '14px',
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: '0.8em',
+                          color: '#558b2f',
+                          margin: '0 0 8px 0',
+                          fontWeight: '600',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        Cenário Otimista
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '0.75em',
+                          color: '#888888',
+                          margin: '0 0 4px 0',
+                        }}
+                      >
+                        Elasticidade +10%
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '1.1em',
+                          fontWeight: '600',
+                          color: '#000000',
+                          margin: '4px 0',
+                        }}
+                      >
+                        R$ {resultado.cenario_otimista.investimento.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p
+                        style={{
+                          fontSize: '0.8em',
+                          color: '#666666',
+                          margin: '8px 0 0 0',
+                          borderTop: '1px solid #c6e6b7',
+                          paddingTop: '8px',
+                        }}
+                      >
+                        Lucro: R$ {resultado.cenario_otimista.lucro.toLocaleString('pt-BR', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         )}
