@@ -34,7 +34,10 @@ interface ResultadoOtimizacao {
   pontos_curva?: PontoGrafico[]
   cenario_pessimista?: CenarioSensibilidade
   cenario_otimista?: CenarioSensibilidade
-  nivel_extrapolacao?: 'dentro_da_faixa' | 'extrapolacao_moderada' | 'extrapolacao_alta'
+  nivel_extrapolacao?:
+    | 'dentro_da_faixa'
+    | 'extrapolacao_moderada'
+    | 'extrapolacao_alta'
   max_investimento_historico?: number
   erro?: string
 }
@@ -204,9 +207,7 @@ function App() {
             <p style={{ margin: '0 0 8px 0', fontWeight: '600' }}>
               ⚠️ Aviso sobre os dados
             </p>
-            <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
-              {avisoUpload}
-            </p>
+            <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{avisoUpload}</p>
           </div>
         )}
 
@@ -442,10 +443,16 @@ function App() {
                   lineHeight: '1.5',
                 }}
               >
-                Invista <strong>R$ {resultado.investimento_otimo.toLocaleString('pt-BR', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}</strong> para maximizar lucros. Faixas de sensibilidade mostradas abaixo baseadas em variações da elasticidade (±10%).
+                Invista{' '}
+                <strong>
+                  R${' '}
+                  {resultado.investimento_otimo.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </strong>{' '}
+                para maximizar lucros. Faixas de sensibilidade mostradas abaixo
+                baseadas em variações da elasticidade (±10%).
               </p>
             </div>
 
@@ -529,7 +536,9 @@ function App() {
                   border: '1px solid #e0e0e0',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
                   <div
                     style={{
                       width: '20px',
@@ -538,9 +547,13 @@ function App() {
                       borderTop: '2px dashed #cccccc',
                     }}
                   />
-                  <span style={{ fontSize: '0.85em', color: '#666666' }}>Máximo Histórico</span>
+                  <span style={{ fontSize: '0.85em', color: '#666666' }}>
+                    Máximo Histórico
+                  </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                >
                   <div
                     style={{
                       width: '20px',
@@ -549,7 +562,15 @@ function App() {
                       borderTop: '2px dashed #2196f3',
                     }}
                   />
-                  <span style={{ fontSize: '0.85em', color: '#1565c0', fontWeight: '600' }}>Recomendação Técnica</span>
+                  <span
+                    style={{
+                      fontSize: '0.85em',
+                      color: '#1565c0',
+                      fontWeight: '600',
+                    }}
+                  >
+                    Recomendação Técnica
+                  </span>
                 </div>
               </div>
             )}
@@ -767,7 +788,8 @@ function App() {
                       fontStyle: 'italic',
                     }}
                   >
-                    Como a incerteza na elasticidade (±10%) afeta a recomendação:
+                    Como a incerteza na elasticidade (±10%) afeta a
+                    recomendação:
                   </p>
                   <div
                     style={{
@@ -813,10 +835,14 @@ function App() {
                           margin: '4px 0',
                         }}
                       >
-                        R$ {resultado.cenario_pessimista.investimento.toLocaleString('pt-BR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        R${' '}
+                        {resultado.cenario_pessimista.investimento.toLocaleString(
+                          'pt-BR',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </p>
                       <p
                         style={{
@@ -827,10 +853,14 @@ function App() {
                           paddingTop: '8px',
                         }}
                       >
-                        Lucro: R$ {resultado.cenario_pessimista.lucro.toLocaleString('pt-BR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        Lucro: R${' '}
+                        {resultado.cenario_pessimista.lucro.toLocaleString(
+                          'pt-BR',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </p>
                     </div>
 
@@ -861,7 +891,8 @@ function App() {
                           margin: '0 0 4px 0',
                         }}
                       >
-                        Elasticidade = {resultado.elasticidade_usada?.toFixed(4)}
+                        Elasticidade ={' '}
+                        {resultado.elasticidade_usada?.toFixed(4)}
                       </p>
                       <p
                         style={{
@@ -871,7 +902,8 @@ function App() {
                           margin: '4px 0',
                         }}
                       >
-                        R$ {resultado.investimento_otimo.toLocaleString('pt-BR', {
+                        R${' '}
+                        {resultado.investimento_otimo.toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -885,7 +917,8 @@ function App() {
                           paddingTop: '8px',
                         }}
                       >
-                        Lucro: R$ {resultado.lucro_projetado.toLocaleString('pt-BR', {
+                        Lucro: R${' '}
+                        {resultado.lucro_projetado.toLocaleString('pt-BR', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -929,10 +962,14 @@ function App() {
                           margin: '4px 0',
                         }}
                       >
-                        R$ {resultado.cenario_otimista.investimento.toLocaleString('pt-BR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        R${' '}
+                        {resultado.cenario_otimista.investimento.toLocaleString(
+                          'pt-BR',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </p>
                       <p
                         style={{
@@ -943,16 +980,19 @@ function App() {
                           paddingTop: '8px',
                         }}
                       >
-                        Lucro: R$ {resultado.cenario_otimista.lucro.toLocaleString('pt-BR', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        Lucro: R${' '}
+                        {resultado.cenario_otimista.lucro.toLocaleString(
+                          'pt-BR',
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </p>
                     </div>
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         )}
