@@ -59,17 +59,6 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false)
   const [avisoUpload, setAvisoUpload] = useState<string | null>(null)
 
-  // Fluxo simplificado
-  const [lucrobruto, setLucroBruto] = useState<number>(5000)
-  const [investimento, setInvestimento] = useState<number>(1000)
-  const [margemSimples, setMargemSimples] = useState<number>(50)
-  const [resultadoSimples, setResultadoSimples] =
-    useState<ResultadoOtimizacao | null>(null)
-  const [loadingSimples, setLoadingSimples] = useState<boolean>(false)
-
-  // Aba ativa
-  const [abaAtiva, setAbaAtiva] = useState<'csv' | 'simples'>('csv')
-
   const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!event.target.files || event.target.files.length === 0) return
 
