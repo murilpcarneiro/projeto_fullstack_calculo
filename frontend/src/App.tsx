@@ -91,8 +91,9 @@ function App() {
       style={{
         padding: '40px',
         fontFamily: "'JetBrains Mono', monospace",
-        maxWidth: '900px',
-        margin: '0 auto',
+        width: '100%',
+        minHeight: '100vh',
+        boxSizing: 'border-box',
       }}
     >
       <h1 className="text-2xl font-bold mb-6">

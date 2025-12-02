@@ -3,6 +3,7 @@ import sympy as sp
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
+from scipy.optimize import fminbound
 
 def calcular_elasticidade(arquivo_csv):
     # Lê o CSV e faz regressão Log-Log para achar 'e' (elasticidade)
@@ -22,35 +23,60 @@ def calcular_elasticidade(arquivo_csv):
     return e, k
 
 def otimizar_investimento(margem_unitaria, k, e):
-    # Define variável simbólica
-    A = sp.symbols('A', positive=True)
+    """
+    Otimiza o investimento usando método numérico (mais robusto que simbólico)
+    """
+    # Definir a função de lucro
+    def lucro(A):
+        if A <= 0:
+            return -1e10
+        Q = k * (A ** e)
+        G = margem_unitaria * Q
+        return G - A
 
-    # Equações do Relatório
-    Q = k * (A**e)             # Vendas
-    G = margem_unitaria * Q    # Lucro Bruto
-    Lucro = G - A              # Lucro Líquido
+    # Negamos porque fminbound minimiza
+    def neg_lucro(A):
+        return -lucro(A)
 
-    # Lucro = margem_unitaria * (k * (A**e)) - A
+    # Definir limites de busca
+    # Se e for muito negativo, o A ótimo será pequeno
+    # Se e for positivo, pode ser maior
+    a_min = 0.001
+    a_max = max(10000, 1000 * abs(k)) if k > 0 else 10000
 
-    # Derivada Primeira (SymPy)
-    d1 = sp.diff(Lucro, A)
+    try:
+        # Usar método numérico robusto
+        a_otimo = fminbound(neg_lucro, a_min, a_max, full_output=False, xtol=1e-6)
+        lucro_max = lucro(a_otimo)
 
-    # Encontrar onde a derivada é zero (Ponto Crítico)
-    solucao = sp.solve(d1, A)
+        # Estimar se é máximo calculando a segunda derivada numericamente
+        h = 1e-5
+        f_a = lucro(a_otimo)
+        f_plus = lucro(a_otimo + h)
+        f_minus = lucro(a_otimo - h)
+        d2 = (f_plus - 2*f_a + f_minus) / (h**2)
+        is_maximo = d2 < 0
 
-    if not solucao:
+    except Exception as ex:
+        print(f"Erro na otimização: {ex}")
         return None
 
-    a_otimo = float(solucao[0])
-    lucro_max = float(Lucro.subs(A, a_otimo))
+    # Gerar pontos da curva para o gráfico
+    a_min_graph = 0.001
+    a_max_graph = max(a_otimo * 1.5, 1000)
 
-    # Validar com Derivada Segunda (Requisito do Edital)
-    d2 = sp.diff(Lucro, A, 2)
-    is_maximo = d2.subs(A, a_otimo) < 0
+    investimentos = np.linspace(a_min_graph, a_max_graph, 100)
+    lucros = [lucro(a) for a in investimentos]
+
+    pontos_curva = [
+        {"investimento": float(inv), "lucro": float(lucro_val)}
+        for inv, lucro_val in zip(investimentos, lucros)
+    ]
 
     return {
-        "investimento_otimo": a_otimo,
-        "lucro_projetado": lucro_max,
+        "investimento_otimo": float(a_otimo),
+        "lucro_projetado": float(lucro_max),
         "is_maximo": bool(is_maximo),
-        "elasticidade_usada": e
+        "elasticidade_usada": float(e),
+        "pontos_curva": pontos_curva
     }
