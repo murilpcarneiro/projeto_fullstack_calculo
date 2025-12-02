@@ -512,58 +512,6 @@ function App() {
             </div>
 
             {/* --- LEGENDA DO GRÁFICO --- */}
-            {resultado.pontos_curva && (
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '20px',
-                  marginBottom: '20px',
-                  flexWrap: 'wrap',
-                  padding: '16px',
-                  background: '#f9f9f9',
-                  borderRadius: '6px',
-                  border: '1px solid #e0e0e0',
-                }}
-              >
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '2px',
-                      background: '#cccccc',
-                      borderTop: '2px dashed #cccccc',
-                    }}
-                  />
-                  <span style={{ fontSize: '0.85em', color: '#666666' }}>
-                    Máximo Histórico
-                  </span>
-                </div>
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-                >
-                  <div
-                    style={{
-                      width: '20px',
-                      height: '2px',
-                      background: '#2196f3',
-                      borderTop: '2px dashed #2196f3',
-                    }}
-                  />
-                  <span
-                    style={{
-                      fontSize: '0.85em',
-                      color: '#1565c0',
-                      fontWeight: '600',
-                    }}
-                  >
-                    Recomendação Técnica
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* --- GRÁFICO --- */}
             {resultado.pontos_curva && (
               <div
